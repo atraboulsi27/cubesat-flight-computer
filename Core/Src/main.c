@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "uart.h"
+#include "telemetry.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -99,9 +100,8 @@ int main(void)
   {
     /* USER CODE END WHILE */
 
-	  char msg[] = "Hello from STM32 test\r\n";
-
-	  uart_send(huart2, msg); // send every 1 second
+	    telemetry_send();
+	    HAL_Delay(1000);
 
     /* USER CODE BEGIN 3 */
   }
