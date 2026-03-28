@@ -1,0 +1,16 @@
+# Build outputs
+Debug/
+Release/
+
+# STM32CubeIDE
+.settings/
+.project
+.cproject
+
+# Logs/temp
+*.log
+*.tmp
+
+# OS
+.DS_Store
+Thumbs.db
