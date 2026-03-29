@@ -10,7 +10,7 @@ void request_light_value(void) {
     uint8_t value = 0;
 
     if(HAL_I2C_Master_Receive(&hi2c1, ARDUINO_ADDR << 1, &value, 1, 100) == HAL_OK) {
-        char buf[64];
+        char buf[32];
         sprintf(buf, "LIGHT:%d", value);
         uart_send_line(&huart2, buf);
     } else {
