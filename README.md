@@ -51,3 +51,7 @@ GND
 3. Flash STM32 firmware.
 4. Open STM32 UART monitor to see light readings.
 5. Adjust lighting and observe changes in `LIGHT:<value>`.
+
+## Circuit Figure
+ <img width="600" height="300" alt="circuit" src="https://github.com/user-attachments/assets/2dcf916c-9575-49ba-a241-b2fbae94348b" />
+
