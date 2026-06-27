@@ -104,7 +104,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  request_light_value();
+	  telemetry_send();
 	  HAL_Delay(500);
     /* USER CODE BEGIN 3 */
   }

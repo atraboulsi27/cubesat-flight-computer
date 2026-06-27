@@ -2,7 +2,8 @@
 #define I2C_H
 
 #include "stm32f4xx_hal.h"
+#include <stdbool.h>
 
-void request_light_value(void);
+bool request_light_value(uint8_t *value);
 
 #endif
