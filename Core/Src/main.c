@@ -50,6 +50,8 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 
+volatile uint8_t telemetry_due = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -109,6 +111,14 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+	  if (telemetry_due)
+	  {
+	      telemetry_due = 0;
+	      telemetry_send();
+
+	  }
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -302,6 +312,14 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+    if (htim->Instance == TIM2)
+    {
+        telemetry_due = 1;
+    }
+}
+
 /* USER CODE END 4 */
 
 /**
@@ -336,10 +354,4 @@ void assert_failed(uint8_t *file, uint32_t line)
 }
 #endif /* USE_FULL_ASSERT */
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-    if (htim->Instance == TIM2)
-    {
-    	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-    }
-}
+
