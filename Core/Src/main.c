@@ -51,6 +51,7 @@ UART_HandleTypeDef huart2;
 /* USER CODE BEGIN PV */
 
 volatile uint8_t telemetry_due = 0;
+uint32_t execution_time_ms = 0;
 
 /* USER CODE END PV */
 
@@ -67,6 +68,13 @@ static void MX_TIM2_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+int init_DWT(void)
+{
+	CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->CYCCNT = 0;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+
+}
 /* USER CODE END 0 */
 
 /**
@@ -101,6 +109,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_I2C1_Init();
   MX_TIM2_Init();
+  init_DWT();
   /* USER CODE BEGIN 2 */
 
   HAL_TIM_Base_Start_IT(&htim2);
@@ -114,8 +123,11 @@ int main(void)
 
 	  if (telemetry_due)
 	  {
+		  uint32_t start_cycles = DWT->CYCCNT;
 	      telemetry_due = 0;
 	      telemetry_send();
+	      uint32_t total_cycles = DWT->CYCCNT - start_cycles;
+	      execution_time_ms = total_cycles / (SystemCoreClock / 1000);
 
 	  }
 
