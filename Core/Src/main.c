@@ -70,6 +70,7 @@ static void MX_TIM2_Init(void);
 
 int init_DWT(void)
 {
+	/* Used for trace time measurement*/
 	CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
     DWT->CYCCNT = 0;
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
@@ -123,11 +124,8 @@ int main(void)
 
 	  if (telemetry_due)
 	  {
-		  uint32_t start_cycles = DWT->CYCCNT;
 	      telemetry_due = 0;
-	      telemetry_send();
-	      uint32_t total_cycles = DWT->CYCCNT - start_cycles;
-	      execution_time_ms = total_cycles / (SystemCoreClock / 1000);
+	      telemetry_send(); // ~ 3 ms latency, satisfies time constraint for telemetry due <100 ms
 
 	  }
 
