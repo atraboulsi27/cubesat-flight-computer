@@ -51,7 +51,7 @@ UART_HandleTypeDef huart2;
 /* USER CODE BEGIN PV */
 
 volatile uint8_t telemetry_due = 0;
-uint32_t execution_time_ms = 0;
+uint32_t execution_time_us = 0;
 
 /* USER CODE END PV */
 
@@ -124,8 +124,12 @@ int main(void)
 
 	  if (telemetry_due)
 	  {
+		  uint32_t start_cycles = DWT->CYCCNT;
 	      telemetry_due = 0;
-	      telemetry_send(); // ~ 3 ms latency, satisfies time constraint for telemetry due <100 ms
+	      telemetry_send(); // ~ 0.7 ms latency, satisfies time constraint for telemetry due <100 ms
+	      uint32_t total_cycles = DWT->CYCCNT - start_cycles;
+	      execution_time_us = total_cycles / (SystemCoreClock / 1000000);
+
 
 	  }
 

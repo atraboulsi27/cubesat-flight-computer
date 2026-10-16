@@ -26,7 +26,7 @@ static const char *select_mode(uint8_t light)
 
 void telemetry_send(void)
 {
-    char buffer[64];
+    char buffer[128];
     static uint32_t sequence = 0;
     uint8_t light = 0;
 
@@ -36,9 +36,9 @@ void telemetry_send(void)
         snprintf(buffer, sizeof(buffer), "SEQ:%lu MODE:%s LIGHT:%u",
                  (unsigned long)sequence++, mode, (unsigned int)light);
     } else {
-        snprintf(buffer, sizeof(buffer), "SEQ:%lu MODE:%s EVENT:NONE",
-                 (unsigned long)sequence++, "UNKNOWN");
+        snprintf(buffer, sizeof(buffer), "SEQ:%lu MODE:%s EVENT:SENSOR VALUE NOT RECEIVED FROM ARDUINO",
+                 (unsigned long)sequence++, "FAILURE");
     }
 
-    uart_send_line(&huart2, buffer);
+    uart_send(&huart2, buffer);
 }
