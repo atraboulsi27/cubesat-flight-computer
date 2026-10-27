@@ -25,6 +25,7 @@
 #include "uart.h"
 #include "telemetry.h"
 #include "i2c.h"
+#include "fault.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -50,17 +51,24 @@ TIM_HandleTypeDef htim2;
 UART_HandleTypeDef huart2;
 
 /* Definitions for defaultTask */
-osThreadId_t defaultTaskHandle;
-const osThreadAttr_t defaultTask_attributes = {
-  .name = "defaultTask",
+osThreadId_t telemetryTaskHandle;
+osThreadId_t telemetryHealthTaskHandle;
+const osThreadAttr_t TelemetryTask_attributes = {
+  .name = "telemetryTask",
   .stack_size = 1024,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+const osThreadAttr_t TelemetryHealthTask_attributes = {
+  .name = "telemetryHealthTask",
+  .stack_size = 512,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* USER CODE BEGIN PV */
 
 volatile uint8_t telemetry_due = 0;
 uint32_t execution_time_us = 0;
-
+volatile uint32_t telemetry_heartbeat = 0;
+volatile FaultCode_t active_fault = FAULT_NONE;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -69,7 +77,8 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM2_Init(void);
-void StartDefaultTask(void *argument);
+void TelemetryTask(void *argument);
+void TelemetryHealthTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -147,7 +156,8 @@ int main(void)
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  telemetryTaskHandle = osThreadNew(TelemetryTask, NULL, &TelemetryTask_attributes);
+  telemetryHealthTaskHandle = osThreadNew(TelemetryHealthTask, NULL, &TelemetryHealthTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -369,14 +379,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_StartDefaultTask */
+/* USER CODE BEGIN Header_TelemetryTask */
 /**
   * @brief  Function implementing the defaultTask thread.
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument)
+/* USER CODE END Header_TelemetryTask */
+void TelemetryTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
 
@@ -388,12 +398,33 @@ void StartDefaultTask(void *argument)
   {
 
 	telemetry_send();
-	uint32_t stack_free =
-	    osThreadGetStackSpace(osThreadGetId());
+    telemetry_heartbeat++;
 	telemetry_ticker += 100;
 	osDelayUntil(telemetry_ticker); // more accurate than osDelay + telemetry execution time
   }
   /* USER CODE END 5 */
+}
+
+void TelemetryHealthTask(void *argument)
+{
+
+    uint32_t telem_health_ticker = osKernelGetTickCount();
+    uint32_t previous_heartbeat = telemetry_heartbeat;
+
+
+    for (;;) {
+        uint32_t current_heartbeat = telemetry_heartbeat;
+
+        if (current_heartbeat != 0 &&
+        		current_heartbeat == previous_heartbeat) {
+            active_fault = FAULT_TELEMETRY_STALLED;
+        }
+
+        previous_heartbeat = current_heartbeat;
+
+        telem_health_ticker += 1000;
+        osDelayUntil(telem_health_ticker);
+    }
 }
 
 /**
