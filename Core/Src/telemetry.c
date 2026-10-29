@@ -1,10 +1,8 @@
 #include "telemetry.h"
 #include "i2c.h"
-#include "uart.h"
+#include "uart_service.h"
 #include <stdio.h>
 #include <stdint.h>
-
-extern UART_HandleTypeDef huart2; // ensure the UART handle is visible
 
 /**
  * LOW_POWER means the spacecraft is in a dim-light or eclipse-like condition.
@@ -26,19 +24,19 @@ static const char *select_mode(uint8_t light)
 
 void telemetry_send(void)
 {
-    char buffer[128];
+    char msg[128];
     static uint32_t sequence = 0;
     uint8_t light = 0;
 
     if (request_light_value(&light)) {
         const char *mode = select_mode(light);
 
-        snprintf(buffer, sizeof(buffer), "SEQ:%lu MODE:%s LIGHT:%u",
+        snprintf(msg, sizeof(msg), "SEQ:%lu MODE:%s LIGHT:%u",
                  (unsigned long)sequence++, mode, (unsigned int)light);
     } else {
-        snprintf(buffer, sizeof(buffer), "SEQ:%lu MODE:%s EVENT:SENSOR VALUE NOT RECEIVED FROM ARDUINO",
+        snprintf(msg, sizeof(msg), "SEQ:%lu MODE:%s EVENT:SENSOR VALUE NOT RECEIVED FROM ARDUINO",
                  (unsigned long)sequence++, "FAILURE");
     }
 
-    uart_send(&huart2, buffer);
+    uart_send_message(msg);
 }

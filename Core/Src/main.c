@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "uart.h"
+#include "uart_service.h"
 #include "telemetry.h"
 #include "i2c.h"
 #include "fault.h"
@@ -53,22 +53,33 @@ UART_HandleTypeDef huart2;
 /* Definitions for defaultTask */
 osThreadId_t telemetryTaskHandle;
 osThreadId_t telemetryHealthTaskHandle;
+osThreadId_t uartTaskHandle;
+
 const osThreadAttr_t TelemetryTask_attributes = {
   .name = "telemetryTask",
   .stack_size = 1024,
   .priority = (osPriority_t) osPriorityNormal,
 };
+
 const osThreadAttr_t TelemetryHealthTask_attributes = {
   .name = "telemetryHealthTask",
   .stack_size = 512,
   .priority = (osPriority_t) osPriorityNormal,
 };
+
+const osThreadAttr_t UartTask_attributes = {
+  .name = "UartTask",
+  .stack_size = 512,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+
 /* USER CODE BEGIN PV */
 
 volatile uint8_t telemetry_due = 0;
 uint32_t execution_time_us = 0;
 volatile uint32_t telemetry_heartbeat = 0;
 volatile FaultCode_t active_fault = FAULT_NONE;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -87,14 +98,14 @@ void TelemetryHealthTask(void *argument);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-int init_DWT(void)
+void init_DWT(void)
 {
 	/* Used for trace time measurement*/
 	CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
     DWT->CYCCNT = 0;
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
-
 }
+
 /* USER CODE END 0 */
 
 /**
@@ -152,12 +163,15 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+
+  uart_service_init();
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* creation of defaultTask */
+
   telemetryTaskHandle = osThreadNew(TelemetryTask, NULL, &TelemetryTask_attributes);
   telemetryHealthTaskHandle = osThreadNew(TelemetryHealthTask, NULL, &TelemetryHealthTask_attributes);
+  uartTaskHandle = osThreadNew(UartTask, NULL, &UartTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
